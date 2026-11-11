@@ -90,8 +90,15 @@ set(SOURCES
   CSModeData.cpp
 )
 
-# CSXCAD library
-add_library( CSXCAD SHARED ${SOURCES} )
+# CSXCAD library. Shared by default; a parent project may set CSXCAD_LIBRARY_TYPE to STATIC.
+if(NOT DEFINED CSXCAD_LIBRARY_TYPE)
+  set(CSXCAD_LIBRARY_TYPE SHARED)
+endif()
+add_library( CSXCAD ${CSXCAD_LIBRARY_TYPE} ${SOURCES} )
+if(CSXCAD_LIBRARY_TYPE STREQUAL "STATIC")
+  # No dllexport/dllimport decoration for a static library (see CSXCAD_Global.h).
+  target_compile_definitions( CSXCAD PUBLIC CSXCAD_STATIC )
+endif()
 
 TARGET_LINK_LIBRARIES( CSXCAD
   ${fparser_LIBRARIES}

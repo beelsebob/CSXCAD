@@ -32,16 +32,24 @@ ENDIF()
 
 # add git revision
 IF(EXISTS ${PROJECT_SOURCE_DIR}/.git )
-  FIND_PACKAGE(Git)
-  # Get the latest abbreviated commit hash of the working branch
-  execute_process(
-    COMMAND ${GIT_EXECUTABLE} describe --tags --always
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-    OUTPUT_VARIABLE GITREV
-  )
-  set(VERSION ${GITREV})
-  string(STRIP ${VERSION} VERSION)
-  message(STATUS "Found Git repository, ${PROJECT_NAME} version tag: ${VERSION}")
+  FIND_PACKAGE(Git QUIET)
+  IF(GIT_FOUND)
+    # Get the latest abbreviated commit hash of the working branch
+    execute_process(
+      COMMAND "${GIT_EXECUTABLE}" describe --tags --always
+      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+      OUTPUT_VARIABLE GITREV
+      RESULT_VARIABLE GITREV_RESULT
+      ERROR_QUIET
+    )
+    # git can be missing from PATH, or refuse the repository (e.g. Windows "dubious ownership");
+    # keep the default version string rather than failing the configure.
+    string(STRIP "${GITREV}" GITREV)
+    IF(GITREV_RESULT EQUAL 0 AND NOT GITREV STREQUAL "")
+      set(VERSION ${GITREV})
+      message(STATUS "Found Git repository, ${PROJECT_NAME} version tag: ${VERSION}")
+    ENDIF()
+  ENDIF()
 ENDIF()
 
 ADD_DEFINITIONS(-DGIT_VERSION=\"${VERSION}\")
